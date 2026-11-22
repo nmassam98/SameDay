@@ -660,3 +660,97 @@ function loadRoleDashboard(roleName) {
         });
     });
 }
+(function professionalUpgradeV3() {
+    // 1. Replace Competitor Names with Pride-Inspiring Kinniya & Sri Lanka Brand Copy
+    setInterval(function() {
+        const h1 = document.querySelector('.hero-left h1');
+        const p = document.querySelector('.hero-left p');
+        if (h1 && h1.textContent.indexOf('All-in-One') !== -1) {
+            h1.innerHTML = 'உங்கள் ஊரின் பெருமை • <span>Sri Lanka’s #1 Super App.</span>';
+        }
+        if (p && p.textContent.indexOf('PickMe') !== -1) {
+            p.textContent = 'கிண்ணியா முதல் இலங்கை முழுவதும்: ஆட்டோ, கார், பார்சல், மினி லாரி, சுவையான உணவு, வாடகை கார் மற்றும் ஆன்லைன் ஷாப்பிங் — அனைத்தும் ஒரே இடத்தில், அதிவேக சேவையுடன்!';
+        }
+    }, 200);
+
+    // 2. Mobile Smart Auto-Scroll directly to Booking Box when clicking any Service Card
+    const cardToTab = {
+        '1. Instant Ride': 'ride', '2. Island-wide': 'courier', '3. Mini Lorry': 'truck',
+        '4. SameDay Eats': 'food', '5. Self-Drive': 'rental', '6. Book Ahead': 'ahead'
+    };
+    setInterval(function() {
+        document.querySelectorAll('.info-card').forEach(function(card) {
+            if (card.dataset.smartScroll) return;
+            const title = card.querySelector('h3');
+            if (!title) return;
+            const txt = title.textContent.trim();
+            Object.keys(cardToTab).forEach(function(k) {
+                if (txt.indexOf(k) !== -1) {
+                    card.dataset.smartScroll = '1';
+                    card.onclick = function() {
+                        navigateTo('home');
+                        setTimeout(function() {
+                            const tab = document.getElementById('htab-' + cardToTab[k]);
+                            if (tab) tab.click();
+                            const appBox = document.querySelector('.app-box');
+                            if (appBox) appBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }, 150);
+                    };
+                }
+            });
+        });
+    }, 300);
+
+    // 3. Guarantee Live Satellite Map & GPS Works 100% on Web & Mobile
+    function ensureLeafletAndMap() {
+        if (!document.querySelector('link[href*="leaflet"]')) {
+            const c = document.createElement('link');
+            c.rel = 'stylesheet';
+            c.href = 'https:' + '//://unpkg.com';
+            document.head.appendChild(c);
+        }
+        if (typeof L === 'undefined') {
+            if (!document.querySelector('script[src*="leaflet"]')) {
+                const s = document.createElement('script');
+                s.src = 'https:' + '//://unpkg.com';
+                document.body.appendChild(s);
+            }
+            return;
+        }
+        ['rideMapBox', 'foodMapBox'].forEach(function(boxId) {
+            const box = document.getElementById(boxId);
+            if (box && !box._leaflet_id) {
+                box.innerHTML = '';
+                const map = L.map(boxId).setView([8.4981, 81.1818], 14);
+                L.tileLayer('https:' + '//{s}://{z}/{x}/{y}{r}.png').addTo(map);
+                const marker = L.marker([8.4981, 81.1818]).addTo(map).bindPopup('Kinniya Live Hub').openPopup();
+
+                const gpsBtn = box.parentElement.querySelector('.gps-btn');
+                const inputBox = box.parentElement.querySelector('input');
+                if (gpsBtn && inputBox) {
+                    gpsBtn.onclick = function() {
+                        gpsBtn.textContent = 'Detecting Exact GPS Satellite...';
+                        navigator.geolocation.getCurrentPosition(async function(pos) {
+                            const lat = pos.coords.latitude, lng = pos.coords.longitude;
+                            let addr = 'GPS (' + lat.toFixed(5) + ', ' + lng.toFixed(5) + ')';
+                            try {
+                                const r = await fetch('https:' + '//nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng);
+                                const d = await r.json();
+                                if (d && d.display_name) addr = d.display_name.split(',').slice(0, 3).join(',');
+                            } catch (e) {}
+                            map.invalidateSize();
+                            map.setView([lat, lng], 16);
+                            marker.setLatLng([lat, lng]).bindPopup('Your Live Location: ' + addr).openPopup();
+                            inputBox.value = addr;
+                            gpsBtn.textContent = 'Live GPS Location Locked!';
+                        }, function() {
+                            alert('Please allow Location access in your phone/browser settings!');
+                            gpsBtn.textContent = 'Detect My Live GPS Location';
+                        }, { enableHighAccuracy: true, timeout: 10000 });
+                    };
+                }
+            }
+        });
+    }
+    setInterval(ensureLeafletAndMap, 400);
+})();
