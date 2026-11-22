@@ -1,9 +1,20 @@
+const firebaseConfig = {
+  apiKey: "AIzaSyArf0Ey5oLfiI7oD3Y8LZtpxRpS9ZZXSTc",
+  authDomain: "://firebaseapp.com",
+  databaseURL: "https://firebaseio.com",
+  projectId: "sameday-lk",
+  storageBucket: "sameday-lk.firebasestorage.app",
+  messagingSenderId: "335191639721",
+  appId: "1:335191639721:web:2b81d63e4378b7b923cbb8"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 const MANAGER_WHATSAPP = "94770000000";
+
 let rideMap, rideMarker, foodMap, foodMarker;
 let selectedVehName = "Tuk-Tuk (3-Wheeler)";
-let baseFare = 150;
-let perKmRate = 80;
-
+let baseFare = 150, perKmRate = 80;
 function initRideMap() {
     if (rideMap) return;
     rideMap = L.map('rideMap').setView([8.4981, 81.1818], 14);
@@ -40,8 +51,7 @@ function detectGPS(targetType) {
     if (!navigator.geolocation) { alert("GPS not supported"); return; }
 
     navigator.geolocation.getCurrentPosition(async function(pos) {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
+        const lat = pos.coords.latitude, lng = pos.coords.longitude;
         let addressText = "GPS: " + lat.toFixed(5) + ", " + lng.toFixed(5);
         try {
             const res = await fetch("https://openstreetmap.org" + lat + "&lon=" + lng);
@@ -51,19 +61,11 @@ function detectGPS(targetType) {
 
         if (targetType === 'ride') {
             initRideMap();
-            setTimeout(function() {
-                rideMap.invalidateSize();
-                rideMap.setView([lat, lng], 16);
-                rideMarker.setLatLng([lat, lng]).bindPopup("You: " + addressText).openPopup();
-            }, 200);
+            setTimeout(function() { rideMap.invalidateSize(); rideMap.setView([lat, lng], 16); rideMarker.setLatLng([lat, lng]).bindPopup("You: " + addressText).openPopup(); }, 200);
             document.getElementById('r-from').value = addressText;
         } else {
             initFoodMap();
-            setTimeout(function() {
-                foodMap.invalidateSize();
-                foodMap.setView([lat, lng], 16);
-                foodMarker.setLatLng([lat, lng]).bindPopup("Deliver: " + addressText).openPopup();
-            }, 200);
+            setTimeout(function() { foodMap.invalidateSize(); foodMap.setView([lat, lng], 16); foodMarker.setLatLng([lat, lng]).bindPopup("Deliver: " + addressText).openPopup(); }, 200);
             document.getElementById('f-addr').value = addressText;
         }
         btn.innerText = "Location Detected!";
@@ -85,22 +87,46 @@ function switchService(service) {
 
     if (service === 'ride') { initRideMap(); setTimeout(function() { rideMap.invalidateSize(); }, 250); }
     if (service === 'food') { initFoodMap(); setTimeout(function() { foodMap.invalidateSize(); }, 250); }
-    if (service === 'admin') renderAdminOrders();
+    if (service === 'admin') listenToCloudOrders();
 }
 
-function saveOrderLog(type, details) {
-    const orders = JSON.parse(localStorage.getItem('sameday_orders') || '[]');
-    orders.unshift({ type: type, details: details, time: new Date().toLocaleTimeString() });
-    localStorage.setItem('sameday_orders', JSON.stringify(orders));
+function saveOrderToCloud(type, details) {
+    const trackId = "SD" + Math.floor(1000 + Math.random() * 9000);
+    db.ref('orders/' + trackId).set({
+        id: trackId,
+        type: type,
+        details: details,
+        status: "Order Received - Assigning Rider",
+        time: new Date().toLocaleString()
+    });
+    return trackId;
 }
 
-function renderAdminOrders() {
-    const orders = JSON.parse(localStorage.getItem('sameday_orders') || '[]');
+function listenToCloudOrders() {
     const list = document.getElementById('adminOrderList');
-    if (orders.length === 0) { list.innerHTML = "<p style='color:#94a3b8;'>No orders yet.</p>"; return; }
-    list.innerHTML = orders.map(function(o) {
-        return "<div class='order-log'><strong>" + o.type + "</strong> (" + o.time + ")<br>" + o.details + "</div>";
-    }).join('');
+    list.innerHTML = "<p style='color:#ffde59;'>Loading live cloud orders...</p>";
+    db.ref('orders').on('value', function(snapshot) {
+        const data = snapshot.val();
+        if (!data) { list.innerHTML = "<p style='color:#94a3b8;'>No live orders in cloud yet.</p>"; return; }
+        const orders = Object.values(data).reverse();
+        list.innerHTML = orders.map(function(o) {
+            return "<div class='order-log'><strong>[" + o.id + "] " + o.type + "</strong><br><small style='color:#4ade80;'>" + o.status + "</small><br>" + o.details + "<br><span style='color:#94a3b8; font-size:0.75rem;'>" + o.time + "</span></div>";
+        }).join('');
+    });
+}
+
+function trackParcel() {
+    const id = document.getElementById('trackInput').value.toUpperCase().trim();
+    const out = document.getElementById('trackOut');
+    if (!id) return;
+    db.ref('orders/' + id).once('value', function(snap) {
+        if (snap.exists()) {
+            const val = snap.val();
+            out.innerText = "[" + val.id + "] " + val.status + " (" + val.type + ")";
+        } else {
+            out.innerText = "ID not found in live database.";
+        }
+    });
 }
 
 function selectVehicle(el, name, base, rate) {
@@ -120,13 +146,9 @@ function openWA(msg) { window.open("https://wa.me" + MANAGER_WHATSAPP + "?text="
 function sendRideWA() {
     const from = document.getElementById('r-from').value, to = document.getElementById('r-to').value, km = document.getElementById('r-km').value;
     if (!from || !to) { alert('Enter Pickup & Drop!'); return; }
-    saveOrderLog("Ride", selectedVehName + " | " + from + " to " + to);
-    openWA("*SameDay Ride*%0AVehicle: " + selectedVehName + "%0AFrom: " + from + "%0ATo: " + to + "%0AKm: " + km);
-}
-
-function trackParcel() {
-    const id = document.getElementById('trackInput').value.toUpperCase().trim();
-    document.getElementById('trackOut').innerText = (id === 'SD101') ? 'Rider Cassim is on the way!' : 'Not found. Try SD101';
+    const id = saveOrderToCloud("Ride", selectedVehName + " | " + from + " to " + to);
+    alert("Ride Booked! Tracking ID: " + id);
+    openWA("*SameDay Ride [" + id + "]*%0AVehicle: " + selectedVehName + "%0AFrom: " + from + "%0ATo: " + to + "%0AKm: " + km);
 }
 
 function updateCourier() { document.getElementById('c-fee').innerText = 'Delivery Charge: LKR ' + document.getElementById('c-dest').value; }
@@ -135,9 +157,11 @@ function sendCourierWA() {
     const from = document.getElementById('c-from').value, rec = document.getElementById('c-rec').value;
     const destText = document.getElementById('c-dest').options[document.getElementById('c-dest').selectedIndex].text;
     if (!rec) { alert('Enter Receiver details!'); return; }
-    saveOrderLog("Courier", from + " to " + destText + " (" + rec + ")");
-    openWA("*SameDay Courier*%0AFrom: " + from + "%0ATo: " + destText + "%0AReceiver: " + rec);
+    const id = saveOrderToCloud("Courier", from + " to " + destText + " (" + rec + ")");
+    alert("Courier Booked! Your Live Tracking ID is: " + id);
+    openWA("*SameDay Courier [" + id + "]*%0AFrom: " + from + "%0ATo: " + destText + "%0AReceiver: " + rec);
 }
+
 const restaurantMenus = {
     "Thavakkal Hotel": [{ name: "Chicken Dum Biriyani", price: 950 }, { name: "Mutton Biriyani", price: 1450 }, { name: "Special Chicken Kottu", price: 800 }, { name: "Parotta & Beef Curry", price: 550 }],
     "KBC Kinniya BBQ Chicken": [{ name: "Full BBQ Chicken", price: 2200 }, { name: "Half BBQ Chicken", price: 1150 }, { name: "KBC Zinger Burger", price: 750 }, { name: "Crispy French Fries", price: 450 }],
@@ -167,8 +191,9 @@ function updateCartUI() {
 function sendFoodWA() {
     const rest = document.getElementById('f-rest').value, addr = document.getElementById('f-addr').value;
     if (cart.length === 0 || !addr) { alert('Add food & enter address!'); return; }
-    saveOrderLog("Food Order", rest + ": " + cart.join(', ') + " to " + addr);
-    openWA("*SameDay Eats*%0ARestaurant: " + rest + "%0AItems: " + cart.join(', ') + "%0ATotal: LKR " + (total + 100) + "%0AAddress: " + addr);
+    const id = saveOrderToCloud("Food Order", rest + ": " + cart.join(', ') + " to " + addr);
+    alert("Food Order Sent! Tracking ID: " + id);
+    openWA("*SameDay Eats [" + id + "]*%0ARestaurant: " + rest + "%0AItems: " + cart.join(', ') + "%0ATotal: LKR " + (total + 100) + "%0AAddress: " + addr);
 }
 
 window.onload = loadMenu;
