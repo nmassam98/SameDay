@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<link rel="manifest" href="manifest.json">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0f172a">
+    <title>SameDay.lk - Kinniya Super App</title>
+    <link rel="stylesheet" href="https://unpkg.com" />
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="bg-orb orb-1"></div>
+<div class="bg-orb orb-2"></div>
+
+<header>
+    <button type="button" class="admin-toggle" onclick="switchService('admin')">Admin</button>
+    <div class="logo">SameDay<span>.lk</span></div>
+    <div class="tagline">Fastest Courier • Hot Food • Instant Rides</div>
+    <div class="badge">Live in Kinniya & Trincomalee</div>
+</header>
+
+<div class="tabs">
+    <button type="button" id="tab-courier" class="tab-btn active" onclick="switchService('courier')">
+        <span class="tab-icon">📦</span><span>Courier</span>
+    </button>
+    <button type="button" id="tab-food" class="tab-btn" onclick="switchService('food')">
+        <span class="tab-icon">🍔</span><span>Eats</span>
+    </button>
+    <button type="button" id="tab-ride" class="tab-btn" onclick="switchService('ride')">
+        <span class="tab-icon">🛺</span><span>Ride</span>
+    </button>
+</div>
+
+<div class="container">
+
+    <div id="sec-courier" class="glass-card">
+        <h2>SameDay Parcel Courier</h2>
+        <div class="form-group">
+            <label>Live Tracking (Try: SD101)</label>
+            <div style="display:flex; gap:8px;">
+                <input type="text" id="trackInput" placeholder="Enter Tracking ID">
+                <button type="button" onclick="trackParcel()" class="add-btn" style="padding:0 18px;">Track</button>
+            </div>
+            <p id="trackOut" style="font-size:0.85rem; color:#4ade80; margin-top:6px;"></p>
+        </div>
+        <div class="form-group">
+            <label>Pickup Location</label>
+            <select id="c-from"><option>Kinniya</option><option>Trincomalee</option><option>Mutur</option></select>
+        </div>
+        <div class="form-group">
+            <label>Destination</label>
+            <select id="c-dest" onchange="updateCourier()">
+                <option value="250">Within Kinniya (LKR 250)</option>
+                <option value="400">Trincomalee / Mutur (LKR 400)</option>
+                <option value="550">Colombo / Island-wide (LKR 550)</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Receiver Name & Phone</label>
+            <input type="text" id="c-rec" placeholder="e.g., Rifas - 0771234567">
+        </div>
+        <div class="price-banner" id="c-fee">Delivery Charge: LKR 250</div>
+        <button type="button" class="cta-btn" onclick="sendCourierWA()">Book Parcel via WhatsApp</button>
+    </div>
+
+    <div id="sec-food" class="glass-card" style="display:none;">
+        <h2>SameDay Eats (Kinniya)</h2>
+        <div class="form-group">
+            <label>Choose Famous Kinniya Restaurant</label>
+            <select id="f-rest" onchange="loadMenu()">
+                <option value="Thavakkal Hotel">Thavakkal Hotel</option>
+                <option value="KBC Kinniya BBQ Chicken">KBC Kinniya BBQ Chicken</option>
+                <option value="Restaurant Mansoorah">Restaurant Mansoorah</option>
+                <option value="Al Salam Hotel">Al Salam Hotel</option>
+                <option value="Al Matham BBQ">Al Matham BBQ</option>
+                <option value="Ceylon Darbar (Restaurant & Cafe)">Ceylon Darbar (Restaurant & Cafe)</option>
+            </select>
+        </div>
+        <div class="food-grid" id="foodGrid"></div>
+        <div class="price-banner" id="cartSummary">Cart Empty (Total: LKR 0)</div>
+        <div style="text-align:right; margin-bottom:10px;">
+            <button type="button" onclick="clearCart()" style="background:none; border:none; color:#f87171; cursor:pointer; font-size:0.85rem; text-decoration:underline;">Clear Cart</button>
+        </div>
+
+        <label>Live Delivery Drop Map</label>
+        <div id="foodMap" class="map-box"></div>
+        <button type="button" id="foodGpsBtn" class="gps-btn" onclick="detectGPS('food')">Detect My Delivery Location (GPS)</button>
+
+        <div class="form-group">
+            <label>Your Name & Kinniya Address</label>
+            <input type="text" id="f-addr" placeholder="e.g., Fahim, Periyatumunai">
+        </div>
+        <button type="button" class="cta-btn" onclick="sendFoodWA()">Order Food via WhatsApp</button>
+    </div>
+
+    <div id="sec-ride" class="glass-card" style="display:none;">
+        <h2>SameDay Live Ride (Kinniya)</h2>
+        <div id="rideMap" class="map-box"></div>
+        <button type="button" id="rideGpsBtn" class="gps-btn" onclick="detectGPS('ride')">Detect My Current GPS Location</button>
+
+        <label>Select Vehicle Type</label>
+        <div class="veh-grid">
+            <div class="veh-card" onclick="selectVehicle(this, 'Bike (2-Wheeler)', 100, 50)">
+                <span class="v-icon">🏍️</span><span class="v-name">Bike</span><span class="v-rate">LKR 100+</span>
+            </div>
+            <div class="veh-card selected" onclick="selectVehicle(this, 'Tuk-Tuk (3-Wheeler)', 150, 80)">
+                <span class="v-icon">🛺</span><span class="v-name">Tuk-Tuk</span><span class="v-rate">LKR 150+</span>
+            </div>
+            <div class="veh-card" onclick="selectVehicle(this, 'Mini Car', 300, 120)">
+                <span class="v-icon">🚗</span><span class="v-name">Mini Car</span><span class="v-rate">LKR 300+</span>
+            </div>
+            <div class="veh-card" onclick="selectVehicle(this, 'AC Sedan', 450, 150)">
+                <span class="v-icon">🚙</span><span class="v-name">AC Sedan</span><span class="v-rate">LKR 450+</span>
+            </div>
+            <div class="veh-card" onclick="selectVehicle(this, 'Family Van', 700, 200)">
+                <span class="v-icon">🚐</span><span class="v-name">Van</span><span class="v-rate">LKR 700+</span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Pickup Point</label>
+            <input type="text" id="r-from" placeholder="e.g., Kinniya Bridge / Hospital">
+        </div>
+        <div class="form-group">
+            <label>Drop Location</label>
+            <input type="text" id="r-to" placeholder="e.g., Trincomalee Town">
+        </div>
+        <div class="form-group">
+            <label>Estimated Distance (Km)</label>
+            <input type="number" id="r-km" value="2" min="1" onchange="calcRideFare()" onkeyup="calcRideFare()">
+        </div>
+        <div class="price-banner" id="r-fee">Tuk-Tuk (3-Wheeler) - Est. Fare: LKR 310</div>
+        <button type="button" class="cta-btn" onclick="sendRideWA()">Confirm Ride via WhatsApp</button>
+    </div>
+
+    <div id="sec-admin" class="glass-card" style="display:none;">
+        <h2>SameDay Admin Order Log</h2>
+        <p style="font-size:0.82rem; color:#94a3b8; margin-bottom:14px;">Recent bookings recorded on this app:</p>
+        <div id="adminOrderList"></div>
+        <button type="button" class="gps-btn" style="margin-top:15px;" onclick="switchService('courier')">Back to App</button>
+    </div>
+
+</div>
+
+<script src="https://unpkg.com"></script>
+<script src="app.js"></script>
+</body>
+</html>

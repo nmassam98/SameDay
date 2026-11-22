@@ -1,0 +1,16 @@
+{
+  "name": "SameDay.lk - Kinniya Super App",
+  "short_name": "SameDay.lk",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#ff914d",
+  "description": "Fastest Courier, Hot Food & Instant Rides in Kinniya & Sri Lanka",
+  "icons": [
+    {
+      "src": "https://flaticon.com",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
