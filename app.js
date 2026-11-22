@@ -1,3 +1,4 @@
+window.BLOCK_OLD_HERO_LOOPS = true;
 const _origCreateNS = document.createElementNS.bind(document);
 document.createElementNS = function(ns, tag) { const e = _origCreateNS(ns, tag); if (!e.style) e.style = {}; return e; };
 const firebaseConfig = {
@@ -753,4 +754,232 @@ function loadRoleDashboard(roleName) {
         });
     }
     setInterval(ensureLeafletAndMap, 400);
+})();
+(function addTriLingualAndDualHero() {
+    // 1. Add Tri-Lingual Switcher (தமிழ் | EN | සිංහල) to Top Navbar
+    const langDict = {
+        en: {
+            heroMain: 'Sri Lanka’s ',
+            heroGold: 'All-in-One Super App.',
+            heroSub: 'கிண்ணியாவின் பெருமை • Ride, send island-wide COD parcels, hire mini lorries, order hot food, rent self-drive cars, or shop online — all in one fast app!',
+            nav: { 'nav-home': 'Home', 'nav-services': 'All Services', 'nav-shop': 'SameDay Shop', 'nav-ai': 'SameDay AI', 'nav-partner': 'Partner / Drive', 'nav-faq': 'Safety & FAQ' }
+        },
+        ta: {
+            heroMain: 'இலங்கையின் நம்பர் 1 ',
+            heroGold: 'ஆல்-இன்-ஒன் சூப்பர் ஆப்.',
+            heroSub: 'உங்கள் ஊரின் பெருமை • ஆட்டோ, கார், பார்சல், மினி லாரி, சுவையான உணவு, வாடகை கார் மற்றும் ஆன்லைன் ஷாப்பிங் — அனைத்தும் ஒரே கிளிக்கில் உங்கள் வீட்டு வாசலுக்கு!',
+            nav: { 'nav-home': 'முகப்பு', 'nav-services': 'சேவைகள்', 'nav-shop': 'ஷாப்பிங்', 'nav-ai': 'SameDay AI', 'nav-partner': 'இணையுங்கள்', 'nav-faq': 'பாதுகாப்பு & FAQ' }
+        },
+        si: {
+            heroMain: 'ශ්‍රී ලංකාවේ අංක 1 ',
+            heroGold: 'සුපිරි ඇප් එක.',
+            heroSub: 'කින්නියා සිට දිවයින පුරා: ත්‍රිරෝද රථ, කාර්, පාර්සල්, ලොරි, ආහාර සහ ඔන්ලයින් ෂොපින් — සියල්ල එකම තැනකින්!',
+            nav: { 'nav-home': 'මුල් පිටුව', 'nav-services': 'සේවාවන්', 'nav-shop': 'සාප්පුව', 'nav-ai': 'SameDay AI', 'nav-partner': 'එක්වන්න', 'nav-faq': 'ආරක්ෂාව & FAQ' }
+        }
+    };
+
+    window.currentAppLang = 'en';
+
+    window.switchSiteLanguage = function(lang) {
+        window.currentAppLang = lang;
+        const d = langDict[lang];
+        const h1 = document.querySelector('.hero-left h1');
+        const p = document.querySelector('.hero-left p');
+        if (h1) h1.innerHTML = d.heroMain + '<span>' + d.heroGold + '</span>';
+        if (p) p.textContent = d.heroSub;
+
+        Object.keys(d.nav).forEach(function(id) {
+            const btn = document.getElementById(id);
+            if (btn) {
+                const img = btn.querySelector('img');
+                btn.textContent = d.nav[id];
+                if (img) btn.insertBefore(img, btn.firstChild);
+            }
+        });
+    };
+
+    setInterval(function() {
+        const navBtns = document.querySelector('.nav-btns');
+        if (navBtns && !document.getElementById('langSelectBox')) {
+            const sel = document.createElement('select');
+            sel.id = 'langSelectBox';
+            sel.setAttribute('style', 'width:auto;padding:5px 10px;border-radius:20px;font-size:0.78rem;font-weight:700;background:#1e293b;color:#ffde59;border:1px solid rgba(255,222,89,0.4);cursor:pointer;');
+            sel.innerHTML = '<option value="en">🌐 EN / தமிழ்</option><option value="ta">🇱🇰 தமிழ்</option><option value="si">🇱🇰 සිංහල</option>';
+            sel.onchange = function() { window.switchSiteLanguage(sel.value); };
+            navBtns.insertBefore(sel, navBtns.firstChild);
+        }
+        if (window.currentAppLang === 'en') {
+            const h1 = document.querySelector('.hero-left h1');
+            const p = document.querySelector('.hero-left p');
+            if (h1 && h1.textContent.indexOf('பெருமை') !== -1) {
+                h1.innerHTML = langDict.en.heroMain + '<span>' + langDict.en.heroGold + '</span>';
+            }
+            if (p && p.textContent.indexOf('கிண்ணியாவின் பெருமை') === -1) {
+                p.textContent = langDict.en.heroSub;
+            }
+        }
+    }, 300);
+})();
+(function finalUnifiedEngine() {
+    const cdn = 'https:' + '//cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/';
+    const exactById = {
+        'nav-home': { img: cdn + 'House/3D/house_3d.png', text: 'Home', size: 20 },
+        'nav-services': { img: cdn + 'High%20voltage/3D/high_voltage_3d.png', text: 'All Services', size: 20 },
+        'nav-shop': { img: cdn + 'Shopping%20bags/3D/shopping_bags_3d.png', text: 'SameDay Shop', size: 20 },
+        'nav-ai': { img: cdn + 'Robot/3D/robot_3d.png', text: 'SameDay AI', size: 20 },
+        'nav-partner': { img: cdn + 'Handshake/3D/handshake_3d.png', text: 'Partner / Drive', size: 20 },
+        'nav-faq': { img: cdn + 'Shield/3D/shield_3d.png', text: 'Safety & FAQ', size: 20 },
+        'htab-ride': { img: cdn + 'Auto%20rickshaw/3D/auto_rickshaw_3d.png', text: 'Ride', size: 28, block: true },
+        'htab-courier': { img: cdn + 'Package/3D/package_3d.png', text: 'Parcel', size: 28, block: true },
+        'htab-truck': { img: cdn + 'Delivery%20truck/3D/delivery_truck_3d.png', text: 'Truck', size: 28, block: true },
+        'htab-food': { img: cdn + 'Hamburger/3D/hamburger_3d.png', text: 'Eats', size: 28, block: true },
+        'htab-rental': { img: cdn + 'Key/3D/key_3d.png', text: 'Rental', size: 28, block: true },
+        'htab-ahead': { img: cdn + 'Airplane/3D/airplane_3d.png', text: 'Book Ahead', size: 28, block: true }
+    };
+
+    const card3D = {
+        '1. Instant Ride': cdn + 'Auto%20rickshaw/3D/auto_rickshaw_3d.png',
+        '2. Island-wide': cdn + 'Package/3D/package_3d.png',
+        '3. Mini Lorry': cdn + 'Delivery%20truck/3D/delivery_truck_3d.png',
+        '4. SameDay Eats': cdn + 'Hamburger/3D/hamburger_3d.png',
+        '5. Self-Drive': cdn + 'Automobile/3D/automobile_3d.png',
+        '6. Book Ahead': cdn + 'Airplane/3D/airplane_3d.png',
+        'Smart Watch': cdn + 'Watch/3D/watch_3d.png',
+        'Wireless Noise': cdn + 'Headphone/3D/headphone_3d.png',
+        'Eid & Party': cdn + 'Dress/3D/dress_3d.png',
+        'Men Sports': cdn + 'Running%20shoe/3D/running_shoe_3d.png',
+        'Mini UPS': cdn + 'Battery/3D/battery_3d.png',
+        'Family Gift': cdn + 'Wrapped%20gift/3D/wrapped_gift_3d.png'
+    };
+
+    const langData = {
+        en: {
+            h1: 'Sri Lanka’s <span>All-in-One Super App.</span>',
+            p: 'உங்கள் ஊரின் பெருமை • Ride, send island-wide COD parcels, hire mini lorries, order hot food, rent self-drive cars, or shop online — all in one fast app!',
+            nav: { 'nav-home': 'Home', 'nav-services': 'All Services', 'nav-shop': 'SameDay Shop', 'nav-ai': 'SameDay AI', 'nav-partner': 'Partner / Drive', 'nav-faq': 'Safety & FAQ' }
+        },
+        ta: {
+            h1: 'இலங்கையின் நம்பர் 1 <span>ஆல்-இன்-ஒன் சூப்பர் ஆப்.</span>',
+            p: 'உங்கள் ஊரின் பெருமை • ஆட்டோ, கார், பார்சல், மினி லாரி, சுவையான உணவு, வாடகை கார் மற்றும் ஆன்லைன் ஷாப்பிங் — அனைத்தும் ஒரே கிளிக்கில் உங்கள் வீட்டு வாசலுக்கு!',
+            nav: { 'nav-home': 'முகப்பு', 'nav-services': 'சேவைகள்', 'nav-shop': 'ஷாப்பிங்', 'nav-ai': 'SameDay AI', 'nav-partner': 'இணையுங்கள்', 'nav-faq': 'பாதுகாப்பு & FAQ' }
+        },
+        si: {
+            h1: 'ශ්‍රී ලංකාවේ අංක 1 <span>සුපිරි ඇප් එක.</span>',
+            p: 'කින්නියා සිට දිවයින පුරා: ත්‍රිරෝද රථ, කාර්, පාර්සල්, ලොරි, ආහාර සහ ඔන්ලයින් ෂොපින් — සියල්ල එකම තැනකින්!',
+            nav: { 'nav-home': 'මුල් පිටුව', 'nav-services': 'සේවාවන්', 'nav-shop': 'සාප්පුව', 'nav-ai': 'SameDay AI', 'nav-partner': 'එක්වන්න', 'nav-faq': 'ආරක්ෂාව & FAQ' }
+        }
+    };
+
+    let activeLang = 'en';
+
+    function applyLangOnce(code) {
+        activeLang = code;
+        const d = langData[code] || langData.en;
+        const h1 = document.querySelector('.hero-left h1');
+        const p = document.querySelector('.hero-left p');
+        if (h1) h1.innerHTML = d.h1;
+        if (p) p.textContent = d.p;
+        Object.keys(d.nav).forEach(function(id) {
+            const btn = document.getElementById(id);
+            if (btn) {
+                const img = btn.querySelector('img');
+                btn.textContent = d.nav[id];
+                if (img) btn.insertBefore(img, btn.firstChild);
+            }
+        });
+    }
+
+    setInterval(function() {
+        // 1. Restore Language Dropdown (English | தமிழ் | සිංහල)
+        const navBtns = document.querySelector('.nav-btns');
+        if (navBtns && !document.getElementById('langSelectBox')) {
+            const sel = document.createElement('select');
+            sel.id = 'langSelectBox';
+            sel.setAttribute('style', 'width:auto;padding:5px 10px;border-radius:20px;font-size:0.78rem;font-weight:700;background:#1e293b;color:#ffde59;border:1px solid rgba(255,222,89,0.4);cursor:pointer;');
+            sel.innerHTML = '<option value="en">🌐 English</option><option value="ta">🇱🇰 தமிழ்</option><option value="si">🇱🇰 සිංහල</option>';
+            sel.onchange = function() { applyLangOnce(sel.value); };
+            navBtns.insertBefore(sel, navBtns.firstChild);
+            applyLangOnce(activeLang);
+        }
+
+        // 2. Restore ALL 3D 4K HD Icons (Navbar + Home Tabs + Cards)
+        Object.keys(exactById).forEach(function(id) {
+            const el = document.getElementById(id);
+            if (!el || el.querySelector('img')) return;
+            const cfg = exactById[id];
+            const label = (langData[activeLang] && langData[activeLang].nav[id]) ? langData[activeLang].nav[id] : cfg.text;
+            const st = cfg.block ? 'width:28px;height:28px;display:block;margin:0 auto 5px;' : 'width:20px;height:20px;vertical-align:-5px;margin-right:7px;';
+            el.innerHTML = '<img src="' + cfg.img + '" style="' + st + '">' + label;
+        });
+
+        document.querySelectorAll('.info-card, .prod-card').forEach(function(card) {
+            if (card.querySelector('img')) return;
+            const title = card.querySelector('h3, .prod-title');
+            if (!title) return;
+            const txt = title.textContent.trim();
+            Object.keys(card3D).forEach(function(k) {
+                if (txt.indexOf(k) !== -1) {
+                    const box = document.createElement('div');
+                    box.setAttribute('style', 'width:76px;height:76px;border-radius:18px;background:rgba(255,145,77,0.15);border:1px solid rgba(255,222,89,0.35);display:flex;align-items:center;justify-content:center;margin-bottom:14px;');
+                    box.innerHTML = '<img src="' + card3D[k] + '" style="width:56px;height:56px;object-fit:contain;">';
+                    card.insertBefore(box, card.firstChild);
+                }
+            });
+        });
+    }, 300);
+})();
+(function fullPageTriLingualSystem() {
+    // 1. Force clean non-blinking Hero text
+    const heroBox = document.querySelector('.hero-left');
+    if (heroBox) {
+        const h1 = heroBox.querySelector('h1');
+        const p = heroBox.querySelector('p');
+        if (h1) h1.innerHTML = 'Sri Lanka’s <span>All-in-One Super App.</span>';
+        if (p) p.textContent = 'உங்கள் ஊரின் பெருமை • Ride, send island-wide COD parcels, hire mini lorries, order hot food, rent self-drive cars, or shop online — all in one fast app!';
+    }
+
+    // 2. Load Google Full-Page Live Translation Engine invisibly
+    const gtDiv = document.createElement('div');
+    gtDiv.id = 'google_translate_element';
+    gtDiv.style.display = 'none';
+    document.body.appendChild(gtDiv);
+
+    window.googleTranslateElementInit = function() {
+        new google.translate.TranslateElement({
+            pageLanguage: 'en',
+            includedLanguages: 'en,ta,si',
+            autoDisplay: false
+        }, 'google_translate_element');
+    };
+
+    const gtScript = document.createElement('script');
+    gtScript.src = 'https:' + '//://google.com';
+    document.body.appendChild(gtScript);
+
+    // 3. Connect Your Custom Language Dropdown to Translate ENTIRE Website
+    function triggerFullTranslation(langCode) {
+        const combo = document.querySelector('.goog-te-combo');
+        if (combo) {
+            combo.value = langCode;
+            combo.dispatchEvent(new Event('change'));
+        } else {
+            document.cookie = 'googtrans=/en/' + langCode + '; path=/';
+            location.reload();
+        }
+    }
+
+    setInterval(function() {
+        const sel = document.getElementById('langSelectBox');
+        if (sel && !sel.dataset.fullTransBound) {
+            sel.dataset.fullTransBound = '1';
+            sel.innerHTML = '<option value="en">🌐 English</option><option value="ta">🇱🇰 தமிழ்</option><option value="si">🇱🇰 සිංහල</option>';
+            sel.onchange = function() {
+                triggerFullTranslation(sel.value);
+            };
+        }
+        // Hide ugly Google top banner bar if it appears
+        const banner = document.querySelector('.goog-te-banner-frame');
+        if (banner) banner.style.display = 'none';
+        document.body.style.top = '0px';
+    }, 400);
 })();
