@@ -246,3 +246,95 @@
     st.textContent = navFixCss;
     document.head.appendChild(st);
 })();
+(function fixMobileScrollAndFastGPS() {
+    // 1. Add scroll-margin-top so Sticky Mobile Navbar NEVER covers the Booking Box
+    const scrollCss = `
+        .app-box { scroll-margin-top: 125px !important; }
+    `;
+    const st = document.createElement('style');
+    st.textContent = scrollCss;
+    document.head.appendChild(st);
+
+    // 2. Precision Mobile Card-to-Form Navigation (Waits until Home renders completely)
+    const cardMap = {
+        '1. Instant Ride': 'ride', '2. Island-wide': 'courier', '3. Mini Lorry': 'truck',
+        '4. SameDay Eats': 'food', '5. Self-Drive': 'rental', '6. Book Ahead': 'ahead'
+    };
+    document.addEventListener('click', function(e) {
+        const card = e.target.closest('.info-card');
+        if (!card) return;
+        const h3 = card.querySelector('h3');
+        if (!h3) return;
+        const txt = h3.textContent.trim();
+        Object.keys(cardMap).forEach(function(key) {
+            if (txt.indexOf(key) !== -1 && typeof navigateTo === 'function') {
+                e.stopImmediatePropagation();
+                navigateTo('home');
+                setTimeout(function() {
+                    if (window.runSDUpgrade) window.runSDUpgrade();
+                    const tab = document.getElementById('htab-' + cardMap[key]);
+                    if (tab) tab.click();
+                    setTimeout(function() {
+                        const box = document.querySelector('.app-box');
+                        if (box) {
+                            const y = box.getBoundingClientRect().top + window.pageYOffset - 120;
+                            window.scrollTo({ top: y, behavior: 'smooth' });
+                        }
+                    }, 120);
+                }, 220);
+            }
+        });
+    }, true);
+
+    // 3. Ultra-Reliable Live Satellite GPS + Auto-Fallback for Mobile & Desktop
+    setInterval(function() {
+        document.querySelectorAll('.gps-btn').forEach(function(btn) {
+            if (btn.dataset.fastGpsBound) return;
+            btn.dataset.fastGpsBound = '1';
+            btn.onclick = function(ev) {
+                ev.preventDefault();
+                const parent = btn.closest('div');
+                const input = parent ? parent.querySelector('input') : null;
+                const mapEl = parent ? parent.querySelector('.map-box') : null;
+                btn.textContent = '⏳ Locating your live GPS...';
+
+                function applyCoords(lat, lng, sourceLabel) {
+                    fetch('https:' + '//nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng)
+                        .then(function(r) { return r.json(); })
+                        .then(function(d) {
+                            const place = (d && d.display_name) ? d.display_name.split(',').slice(0, 3).join(',') : (lat.toFixed(5) + ', ' + lng.toFixed(5));
+                            if (input) input.value = place;
+                            btn.textContent = '✅ Locked: ' + place.slice(0, 28) + '...';
+                            if (mapEl && typeof L !== 'undefined') {
+                                mapEl.innerHTML = '';
+                                const m = L.map(mapEl.id).setView([lat, lng], 16);
+                                L.tileLayer('https:' + '//{s}://{z}/{x}/{y}{r}.png').addTo(m);
+                                L.marker([lat, lng]).addTo(m).bindPopup('📍 ' + place).openPopup();
+                            }
+                        })
+                        .catch(function() {
+                            if (input) input.value = 'GPS: ' + lat.toFixed(5) + ', ' + lng.toFixed(5);
+                            btn.textContent = '✅ GPS Coordinates Locked!';
+                        });
+                }
+
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        function(pos) { applyCoords(pos.coords.latitude, pos.coords.longitude, 'GPS'); },
+                        function() {
+                            // Fallback to Network Location if phone GPS is blocked/indoor
+                            fetch('https:' + '//ipapi.co/json/')
+                                .then(function(r) { return r.json(); })
+                                .then(function(ip) {
+                                    if (ip && ip.latitude) applyCoords(ip.latitude, ip.longitude, 'Network');
+                                    else alert('⚠️ Please turn ON Location/GPS in your phone settings and allow browser permission.');
+                                })
+                                .catch(function() { btn.textContent = '📍 Detect My Live GPS Location'; });
+                        },
+                        { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 }
+                    );
+                }
+            };
+        });
+    }, 300);
+})();
