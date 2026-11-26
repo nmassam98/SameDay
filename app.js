@@ -12,7 +12,7 @@ const firebaseConfig = {
 };
 let db = null;
 if (typeof firebase !== 'undefined') { firebase.initializeApp(firebaseConfig); db = firebase.database(); }
-const MANAGER_WA = "+40731929769";
+const MANAGER_WA = "40731929769";
 
 const SVG_PATHS = {
     home: 'M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z',
@@ -95,7 +95,7 @@ root.appendChild(el('nav', { className: 'top-nav' }, [
         navLinksBox,
         el('div', { className: 'nav-btns' }, [
             el('button', { className: 'btn-sm', text: 'Admin', onclick: function() { navigateTo('admin'); } }),
-            el('a', { href: 'tel:++40731929769', className: 'btn-sm accent', text: '24/7 Hotline' })
+            el('a', { href: 'tel:+40731929769', className: 'btn-sm accent', text: '24/7 Hotline' })
         ])
     ])
 ]));
