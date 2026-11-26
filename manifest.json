@@ -1,16 +1,18 @@
 {
-  "name": "SameDay.lk - Kinniya Super App",
-  "short_name": "SameDay.lk",
-  "start_url": "index.html",
+  "name": "SameDay - Sri Lanka Super App",
+  "short_name": "SameDay",
+  "description": "Sri Lanka's All-in-One Super App for Instant Rides, Island-wide COD Parcels, Mini Lorry Trucks, Hot Food Delivery, Self-Drive Car Rentals & Online Shopping.",
+  "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#0f172a",
+  "background_color": "#060911",
   "theme_color": "#ff914d",
-  "description": "Fastest Courier, Hot Food & Instant Rides in Kinniya & Sri Lanka",
+  "orientation": "portrait",
   "icons": [
     {
-      "src": "https://flaticon.com",
+      "src": "https://jsdelivr.net",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
